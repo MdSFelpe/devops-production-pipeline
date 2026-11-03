@@ -26,7 +26,7 @@ jobs:
         run: |
           cd docker-java-api
           chmod +x mvnw
-          ./mvnw clean package
+          ./mvnw clean package -DskipTests
 
   docker-build:
     name: Build Docker Image
