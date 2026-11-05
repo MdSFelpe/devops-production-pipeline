@@ -1,4 +1,4 @@
-name: Java Spring Boot CI/CD Pipeline
+name: CI Local Pipeline (Java + Docker + K8s)
 
 on:
   push:
@@ -7,12 +7,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-test:
-    name: Build & Test Java App
+  build-and-validate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -22,25 +21,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build and Test with Maven
+      # 1. Dá permissão de execução e compila a aplicação
+      - name: Build Java Application
         run: |
-          cd docker-java-api
-          chmod +x mvnw
-          ./mvnw clean package -DskipTests
+          chmod +x ./docker-java-api/mvnw
+          ./docker-java-api/mvnw clean package -DskipTests --file ./docker-java-api/pom.xml
 
-  docker-build:
-    name: Build Docker Image
-    needs: build-and-test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # 2. Constrói a imagem Docker para validar se o Dockerfile está 100%
       - name: Build Docker Image
         run: |
-          cd docker-java-api
-          docker build -t docker-java-api:latest .
+          docker build -t docker-java-api:1.0.0 ./docker-java-api
+
+      # 3. Valida a sintaxe de todos os manifestos Kubernetes na pasta k8s/
+      - name: Validate K8s Manifests (Dry-Run)
+        run: |
+          sudo snap install kubectl --classic
+          kubectl apply --dry-run=client -f k8s/
