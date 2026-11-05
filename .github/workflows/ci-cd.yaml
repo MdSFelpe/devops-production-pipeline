@@ -34,8 +34,6 @@ jobs:
 
    
       - name: Validate K8s Manifests
-        uses: kubeconform/github-action@v3.2.0
-        with:
-          k8s-version: 'v1.28.0'
-          schema-location: 'default'
-          files: 'k8s/*.yaml'
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary k8s/
