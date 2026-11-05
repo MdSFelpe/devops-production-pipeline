@@ -21,18 +21,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 1. Dá permissão de execução e compila a aplicação
+      # 1. Dá permissão de execução e compila
       - name: Build Java Application
         run: |
           chmod +x ./docker-java-api/mvnw
           ./docker-java-api/mvnw clean package -DskipTests --file ./docker-java-api/pom.xml
 
-      # 2. Constrói a imagem Docker para validar se o Dockerfile está 100%
+      # 2. Constrói a imagem Docker para validar se o Dockerfile
       - name: Build Docker Image
         run: |
           docker build -t docker-java-api:1.0.0 ./docker-java-api
 
-      # 3. Valida a sintaxe de todos os manifestos Kubernetes na pasta k8s/
+      # 3. Valida a sintaxe de todos os manifestos Kubernetes.
       - name: Validate K8s Manifests (Dry-Run)
         run: |
           sudo snap install kubectl --classic
