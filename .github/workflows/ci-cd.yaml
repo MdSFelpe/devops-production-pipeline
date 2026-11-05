@@ -35,5 +35,6 @@ jobs:
       # 3. Valida a sintaxe de todos os manifestos Kubernetes.
       - name: Validate K8s Manifests (Dry-Run)
         run: |
-          sudo snap install kubectl --classic
-          kubectl apply --dry-run=client -f k8s/
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          ./kubectl apply --dry-run=client -f k8s/
