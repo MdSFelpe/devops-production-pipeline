@@ -21,3 +21,15 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "db_password" {
+  description = "Master password for the PostgreSQL RDS instance"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_username" {
+  description = "Master username for the PostgreSQL RDS instance"
+  type        = string
+  default     = "admin"
+}
