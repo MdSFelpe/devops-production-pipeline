@@ -1,23 +1,23 @@
-# Build da aplicação com Maven
+
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
-COPY . .
-RUN chmod +x mvnw
-RUN ./mvnw clean package -DskipTests
 
 
-# Execução leve apenas com o JRE
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+
+COPY src ./src
+RUN ./mvnw clean package -DskipTests -B
+
+
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY --from=builder /app/target/*.jar app.jar
-
-
 RUN chown appuser:appgroup app.jar
-
 
 USER appuser
 
