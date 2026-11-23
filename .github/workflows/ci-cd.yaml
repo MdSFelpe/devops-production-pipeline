@@ -1,4 +1,4 @@
-name: CI Local Pipeline (Java + Docker + K8s)
+name: CI/CD Pipeline (Java + Docker + K8s + Terraform)
 
 on:
   push:
@@ -6,9 +6,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/docker-java-api
+
 jobs:
   build-and-validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout Repository
@@ -19,21 +26,47 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
-
+          cache: 'maven'
+          cache-dependency-path: docker-java-api/pom.xml
 
       - name: Build Java Application
         run: |
           chmod +x ./docker-java-api/mvnw
           ./docker-java-api/mvnw clean package -DskipTests --file ./docker-java-api/pom.xml
 
-    
-      - name: Build Docker Image
-        run: |
-          docker build -t docker-java-api:1.0.0 ./docker-java-api
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-   
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t $IMAGE_LOWER:latest -t $IMAGE_LOWER:${{ github.sha }} ./docker-java-api
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            docker push $IMAGE_LOWER:latest
+            docker push $IMAGE_LOWER:${{ github.sha }}
+          fi
+
       - name: Validate K8s Manifests
         run: |
           curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
           ./kubeconform -strict -summary k8s/
+
+  validate-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init & Validate
+        working-directory: ./terraform
+        run: |
+          terraform init -backend=false
+          terraform validate
