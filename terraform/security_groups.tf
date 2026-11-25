@@ -2,7 +2,7 @@ resource "aws_security_group" "alb_sg" {
   name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Allow HTTP and HTTPS inbound traffic to ALB"
   vpc_id      = aws_vpc.main_vpc.id
-  tags = { Name = "${var.project_name}-${var.environment}-alb-sg" }
+  tags        = { Name = "${var.project_name}-${var.environment}-alb-sg" }
 
   ingress {
     from_port   = 80
@@ -21,7 +21,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 resource "aws_security_group" "app_sg" {
-  name_prefix        = "${var.project_name}-${var.environment}-app-sg"
+  name_prefix = "${var.project_name}-${var.environment}-app-sg"
   description = "Allow HTTP traffic to Spring Boot API"
   vpc_id      = aws_vpc.main_vpc.id
 
@@ -59,7 +59,7 @@ resource "aws_security_group" "rds_sg" {
   name        = "${var.project_name}-${var.environment}-rds-sg"
   description = "Allow traffic from Spring Boot API to RDS"
   vpc_id      = aws_vpc.main_vpc.id
-  tags = { Name = "${var.project_name}-${var.environment}-rds-sg" }
+  tags        = { Name = "${var.project_name}-${var.environment}-rds-sg" }
 
   ingress {
     from_port       = 5432

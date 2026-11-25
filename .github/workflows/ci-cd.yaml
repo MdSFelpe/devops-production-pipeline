@@ -70,3 +70,52 @@ jobs:
         run: |
           terraform init -backend=false
           terraform validate
+
+  deploy-aws-ssm:
+    name: Deploy to AWS EC2 via SSM
+    runs-on: ubuntu-latest
+    needs: [ build-and-validate, validate-terraform ]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy Container via AWS SSM
+        env:
+          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" | tr '[:upper:]' '[:lower:]')
+
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=java-springboot-api-dev-app-server" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          if [ "$INSTANCE_ID" == "None" ] || [ -z "$INSTANCE_ID" ]; then
+            echo "Nenhuma instância EC2 em execução no momento. Deploy ignorado."
+            exit 0
+          fi
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters "{\"commands\":[
+              \"sudo docker pull $IMAGE_LOWER\",
+              \"sudo docker stop java-springboot-api || true\",
+              \"sudo docker rm java-springboot-api || true\",
+              \"sudo docker run -d --name java-springboot-api --restart unless-stopped -p 8080:8080 -e SPRING_DATASOURCE_URL=jdbc:postgresql://$RDS_ENDPOINT:5432/springbootdb -e SPRING_DATASOURCE_USERNAME=postgres -e SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD $IMAGE_LOWER\"
+            ]}" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Aguardando execução do comando SSM ($COMMAND_ID) na instância $INSTANCE_ID..."
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID"
+
+          echo "Deploy concluído com sucesso na EC2!"
