@@ -21,13 +21,22 @@ resource "aws_instance" "app_server" {
   associate_public_ip_address = true
   user_data_replace_on_change = true
 
-  user_data = <<-EOF
-              #!/bin/bash
-              apt-get update -y
-              apt-get install -y docker.io
-              systemctl enable --now docker
-              usermod -aG docker ubuntu
-              EOF
+user_data = <<-EOF
+  #!/bin/bash
+  apt-get update -y
+  apt-get install -y docker.io
+  systemctl enable --now docker
+  usermod -aG docker ubuntu
+
+docker run -d \
+  --name java-springboot-api \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL="jdbc:postgresql://${aws_db_instance.postgres_db.address}:5432/springbootdb" \
+  -e SPRING_DATASOURCE_USERNAME="postgres" \
+  -e SPRING_DATASOURCE_PASSWORD="${var.db_password}" \
+  ghcr.io/mdsfelpe/docker-java-api:latest
+EOF
 
   tags = {
     Name = "${var.project_name}-${var.environment}-app-server"
