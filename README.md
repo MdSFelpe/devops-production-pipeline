@@ -6,12 +6,12 @@ Este repositório contém a arquitetura completa de uma API RESTful em **Java 21
 
 ## 🧐 O que este projeto faz?
 
-* **Aplicação:** Executa uma API Spring Boot em Java 21 comunicando com um banco de dados PostgreSQL (local ou gerenciado na AWS RDS) e expondo endpoint de health check (`/health`).
-* **Segurança de Contêiner:** O contêiner da API utiliza *multi-stage build* (`eclipse-temurin:21-jre-alpine`) e roda sob o usuário sem privilégios `appuser` (não-root) para mitigar riscos de escalada de privilégios.
-* **Infraestrutura como Código na AWS (Terraform):** Provisiona uma rede isolada (VPC `10.0.0.0/16`) com subnets públicas para a aplicação (EC2) e subnets privadas sem acesso à internet para o banco de dados (RDS PostgreSQL 16).
-* **Gestão de Configurações e Segredos:** Gerencia variáveis não sensíveis via `ConfigMap` e credenciais via `Secret` no Kubernetes, além de injeção dinâmica de variáveis de ambiente (`SPRING_DATASOURCE_*`) na AWS sem segredos expostos no código.
-* **Controle de Recursos:** Define limites rigorosos de CPU, Memória e Armazenamento Temporário (`ephemeral-storage`) no Kubernetes para prevenir problemas de *noisy neighbor*.
-* **CI/CD & DevSecOps Integrado:** Pipeline no GitHub Actions para compilação Maven, varredura de vulnerabilidades com **Trivy**, publicação automática da imagem no **GitHub Container Registry (`ghcr.io`)**, validação sintática dos manifestos YAML/Terraform e análise estática via SonarQube.
+- **Aplicação:** Executa uma API Spring Boot em Java 21 comunicando com um banco de dados PostgreSQL (local ou gerenciado na AWS RDS) e expondo endpoint de health check (`/health`).
+- **Segurança de Contêiner:** O contêiner da API utiliza *multi-stage build* (`eclipse-temurin:21-jre-alpine`) e roda sob o usuário sem privilégios `appuser` (não-root) para mitigar riscos de escalada de privilégios.
+- **Infraestrutura como Código na AWS (Terraform):** Provisiona uma rede isolada (VPC `10.0.0.0/16`) com subnets públicas para a aplicação (EC2) e subnets privadas sem acesso à internet para o banco de dados (RDS PostgreSQL 16).
+- **Gestão de Configurações e Segredos:** Gerencia variáveis não sensíveis via `ConfigMap` e credenciais via `Secret` no Kubernetes, além de injeção dinâmica de variáveis de ambiente (`SPRING_DATASOURCE_*`) na AWS sem segredos expostos no código.
+- **Controle de Recursos:** Define limites rigorosos de CPU, Memória e Armazenamento Temporário (`ephemeral-storage`) no Kubernetes para prevenir problemas de *noisy neighbor*.
+- **CI/CD & DevSecOps Integrado:** Pipeline no GitHub Actions para compilação Maven, varredura de vulnerabilidades com **Trivy**, publicação automática da imagem no **GitHub Container Registry (`ghcr.io`)**, validação sintática dos manifestos YAML/Terraform e análise estática via SonarQube.
 
 ---
 
@@ -43,12 +43,12 @@ Este repositório contém a arquitetura completa de uma API RESTful em **Java 21
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Linguagem / Framework:** Java 21 / Spring Boot 4
-* **Banco de Dados:** PostgreSQL 15 / 16 (AWS RDS)
-* **Containerização & Registry:** Docker (Multi-stage build com usuário não-root) e GitHub Container Registry (`ghcr.io`)
-* **Cloud & IaC:** AWS (VPC, EC2, RDS, Security Groups, IGW) e Terraform
-* **Orquestração Local:** Kubernetes (Deployments, Services, ConfigMaps, Secrets)
-* **CI/CD & Segurança:** GitHub Actions, Trivy Security Scanner e SonarQube / SonarLint (0 avisos)
+- **Linguagem / Framework:** Java 21 / Spring Boot 4
+- **Banco de Dados:** PostgreSQL 15 / 16 (AWS RDS)
+- **Containerização & Registry:** Docker (Multi-stage build com usuário não-root) e GitHub Container Registry (`ghcr.io`)
+- **Cloud & IaC:** AWS (VPC, EC2, RDS, Security Groups, IGW) e Terraform
+- **Orquestração Local:** Kubernetes (Deployments, Services, ConfigMaps, Secrets)
+- **CI/CD & Segurança:** GitHub Actions, Trivy Security Scanner e SonarQube / SonarLint (0 avisos)
 
 ---
 
@@ -78,21 +78,42 @@ devops-production-pipeline/
 
 ---
 
+## 🔌 Endpoints da API
+
+| Método | Rota | Descrição | Resposta Esperada |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | Verifica a disponibilidade da aplicação e conectividade | `{"service":"java-springboot-api","status":"UP"}` |
+
+---
+
 ## 📋 Pré-requisitos
 
-* **Para deploy na AWS:**
-  * Conta ativa na **AWS** (com acesso ao Console para criação de usuário IAM e acompanhamento dos recursos).
-  * **AWS CLI** instalada e autenticada no terminal via `aws configure` (com `Access Key ID`, `Secret Access Key` e região `us-east-1`).
-  * **Terraform** (`>= 1.5`) instalado.
-* **Para execução local:**
-  * **Docker** e **Docker Compose** instalados.
-  * **Minikube** e **kubectl** (caso utilize a orquestração local em Kubernetes).
+- **Geral:**
+  - **Git** instalado para clonar o repositório.
+- **Para deploy na AWS:**
+  - Conta ativa na **AWS** (com acesso ao Console para criação de usuário IAM e acompanhamento dos recursos).
+  - **AWS CLI** instalada e autenticada no terminal via `aws configure` (com `Access Key ID`, `Secret Access Key` e região `us-east-1`).
+  - **Terraform** (`>= 1.5`) instalado.
+- **Para execução local:**
+  - **Docker** e **Docker Compose** instalados.
+  - **Minikube** e **kubectl** (caso utilize a orquestração local em Kubernetes).
 
 ---
 
 ## 🚀 Como Executar o Projeto
 
+### 0. Clonar o Repositório
+
+```bash
+git clone [https://github.com/MdsCalcifer/devops-production-pipeline.git](https://github.com/MdsCalcifer/devops-production-pipeline.git)
+cd devops-production-pipeline
+```
+
 ### 1. Na Nuvem AWS com Terraform (Ambiente de Produção)
+
+> **⚠️ Nota sobre Custos (AWS Free Tier):** A infraestrutura utiliza instâncias elegíveis ao nível gratuito da AWS (`t3.micro` para EC2 e `db.t3.micro` para RDS). Ainda assim, manter esses recursos ligados continuamente fora da cota gratuita gera cobrança por hora. Sempre execute os comandos da seção **Limpeza do Ambiente** ao finalizar seus testes.
+
+> **📦 Nota sobre o Container Registry (`ghcr.io`):** Por padrão, o script de inicialização em `terraform/ec2.tf` baixa a imagem pública `ghcr.io/mdsfelpe/docker-java-api:latest`. Caso você faça um *fork* deste projeto para publicar sua própria imagem, atualize o endereço da imagem no `terraform/ec2.tf` e garanta que o pacote esteja configurado como **Public** na aba *Packages* do seu GitHub.
 
 1. Garanta que suas credenciais da AWS estão ativas no terminal:
    ```bash
@@ -154,17 +175,17 @@ terraform destroy -target="aws_db_instance.postgres_db" -target="aws_instance.ap
 *(Ou execute `terraform destroy` para remover toda a infraestrutura).*
 
 ### 2. Apagar Recursos do Kubernetes (Minikube)
-* **Remover apenas os manifestos da aplicação:**
+- **Remover apenas os manifestos da aplicação:**
   ```bash
   kubectl delete -f k8s/
   ```
-* **Reiniciar a aplicação do zero em caso de erro:**
+- **Reiniciar a aplicação do zero em caso de erro:**
   ```bash
   kubectl delete -f k8s/
   docker build -t docker-java-api:1.0.0 ./docker-java-api
   kubectl apply -f k8s/
   ```
-* **Pausar ou apagar completamente o cluster Minikube:**
+- **Pausar ou apagar completamente o cluster Minikube:**
   ```bash
   minikube stop
   minikube delete
