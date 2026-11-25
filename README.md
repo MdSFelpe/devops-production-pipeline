@@ -10,17 +10,19 @@ Repositório para a pipeline de integração e entrega contínua (CI/CD) de uma 
 devops-production-pipeline/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yaml              # Pipeline automatizada de CI/CD (Build, Testes e Validação IaC)
+│       └── ci-cd.yaml           # Pipeline de build, scan Trivy, push GHCR e validação IaC
 ├── docker-java-api/
-│   ├── Dockerfile                  # Build multi-stage otimizado (usuário não-root appuser)
-│   ├── docker-compose.yml          # Execução local rápida da API + PostgreSQL
-│   ├── pom.xml                     # Dependências e configurações do Maven
-│   └── src/                        # Código-fonte da aplicação Java Spring Boot
-├── k8s/
-│   ├── app-deployment.yaml         # Deployment e Service da API Java (com limits e privilégios mínimos)
-│   ├── postgres-configmap.yaml     # Variáveis de ambiente não sensíveis do banco de dados
-│   ├── postgres-deployment.yaml    # Deployment, Service e Volume do PostgreSQL
-│   └── postgres-secret.yaml        # Credenciais sensíveis codificadas em Base64
-├── .gitignore                      # Regras para ignorar arquivos de IDEs e binários compilados
-└── README.md                       # Documentação principal do repositório
+│   ├── src/                     # Código-fonte Spring Boot (inclui endpoint /health)
+│   ├── Dockerfile               # Multi-stage build com usuário não-root
+│   ├── .dockerignore            # Otimização de contexto de build
+│   └── pom.xml                  # Dependências Maven (Java 21 + PostgreSQL Driver)
+├── k8s/                         # Manifestos Kubernetes validados na pipeline
+└── terraform/
+    ├── vpc.tf                   # VPC customizada (10.0.0.0/16)
+    ├── subnets.tf               # Subnets públicas e privadas multi-AZ
+    ├── gateways.tf              # Internet Gateway e Route Tables
+    ├── security_groups.tf       # Regras de firewall encadeadas (app_sg -> rds_sg)
+    ├── rds.tf                   # Instância gerenciada PostgreSQL 16
+    ├── ec2.tf                   # Instância EC2 com bootstrap automatizado via user_data
+    └── outputs.tf               # Exposição do IP público da API e endpoint do RDS
 ```
