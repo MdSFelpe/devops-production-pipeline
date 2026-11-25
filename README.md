@@ -78,21 +78,37 @@ devops-production-pipeline/
 
 ---
 
+## 📋 Pré-requisitos
+
+* **Para deploy na AWS:**
+  * Conta ativa na **AWS** (com acesso ao Console para criação de usuário IAM e acompanhamento dos recursos).
+  * **AWS CLI** instalada e autenticada no terminal via `aws configure` (com `Access Key ID`, `Secret Access Key` e região `us-east-1`).
+  * **Terraform** (`>= 1.5`) instalado.
+* **Para execução local:**
+  * **Docker** e **Docker Compose** instalados.
+  * **Minikube** e **kubectl** (caso utilize a orquestração local em Kubernetes).
+
+---
+
 ## 🚀 Como Executar o Projeto
 
 ### 1. Na Nuvem AWS com Terraform (Ambiente de Produção)
 
-1. Acesse a pasta de infraestrutura e inicialize o Terraform:
+1. Garanta que suas credenciais da AWS estão ativas no terminal:
+   ```bash
+   aws sts get-caller-identity
+   ```
+2. Acesse a pasta de infraestrutura e inicialize o Terraform:
    ```bash
    cd terraform
    terraform init
    terraform validate
    ```
-2. Provisione a VPC, o banco RDS PostgreSQL e a instância EC2 (informe a senha desejada para o banco quando solicitado):
+3. Provisione a VPC, o banco RDS PostgreSQL e a instância EC2 (informe a senha desejada para o banco quando solicitado):
    ```bash
    terraform apply
    ```
-3. Aguarde o bootstrap automático (`user_data`) e valide a aplicação usando o IP público retornado em `ec2_public_ip`:
+4. Aguarde o bootstrap automático (`user_data`) e valide a aplicação usando o IP público retornado em `ec2_public_ip`:
    ```bash
    curl http://<ec2_public_ip>:8080/health
    # Resposta esperada: {"service":"java-springboot-api","status":"UP"}
